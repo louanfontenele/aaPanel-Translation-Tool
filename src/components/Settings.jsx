@@ -118,9 +118,9 @@ export function SettingsModal({ isOpen, onClose, onSave }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xl w-full max-w-lg border border-slate-200 dark:border-slate-800">
-        <header className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xl w-full max-w-lg border border-slate-200 dark:border-slate-800 flex flex-col max-h-[90vh]">
+        <header className="flex-none flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
             Settings
           </h2>
@@ -131,7 +131,7 @@ export function SettingsModal({ isOpen, onClose, onSave }) {
           </button>
         </header>
 
-        <div className="p-6 space-y-4">
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
           <div className="flex justify-end">
             <button
               onClick={handleRefreshModels}
@@ -276,7 +276,7 @@ export function SettingsModal({ isOpen, onClose, onSave }) {
           </div>
         </div>
 
-        <footer className="px-6 py-4 bg-slate-50 dark:bg-slate-950/50 rounded-b-lg border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2">
+        <footer className="flex-none px-6 py-4 bg-slate-50 dark:bg-slate-950/50 rounded-b-lg border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2">
           <button
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200">
