@@ -5,6 +5,7 @@ import { ThemeProvider, useTheme } from "./components/ThemeProvider";
 import { DiffViewer } from "./components/DiffViewer";
 import { SettingsModal } from "./components/Settings";
 import { TranslationModal } from "./components/TranslationModal";
+import { KeySyncModal } from "./components/KeySyncModal";
 import { openFile } from "./lib/shell-utils";
 import { translateBatch, fetchGeminiModels } from "./lib/ai-translator"; // fetchGeminiModels might be unused here but keeping imports safe
 import { getSleepTime, isDailyLimitError } from "./lib/ai-models";
@@ -24,6 +25,7 @@ import {
   FileText,
   Save,
   Languages,
+  RefreshCw,
 } from "lucide-react";
 import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
 
@@ -103,6 +105,7 @@ function AppContent() {
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isTranslationModalOpen, setIsTranslationModalOpen] = useState(false);
+  const [isKeySyncModalOpen, setIsKeySyncModalOpen] = useState(false);
 
   // Helper to write file (Tauri)
   const writeTextFile = async (path, content) => {
@@ -244,6 +247,52 @@ function AppContent() {
 
   const handleCancelTranslation = () => {
     isCancelledRef.current = true;
+  };
+
+  const handleSyncKeys = async (keysToDelete) => {
+    try {
+      setIsLoading(true);
+      setLoadingStatus("Synchronizing structure...");
+
+      // 1. Filter out deleted keys from editorData
+      const newEditorData = editorData.filter(
+        (item) => !keysToDelete.includes(item.key)
+      );
+      setEditorData(newEditorData);
+
+      // 2. Save the new structure to the Target File
+      const newJson = {};
+
+      // Helper to set nested value
+      const setByPath = (obj, path, value) => {
+        const keys = path.split(".");
+        let current = obj;
+        for (let i = 0; i < keys.length - 1; i++) {
+          if (!current[keys[i]]) current[keys[i]] = {};
+          current = current[keys[i]];
+        }
+        current[keys[keys.length - 1]] = value;
+      };
+
+      newEditorData.forEach((item) => {
+        let val = item.target;
+        if (val === undefined || val === null) {
+          val = ""; // Force creation of key
+        }
+        setByPath(newJson, item.key, val);
+      });
+
+      await writeTextFile(selectedFiles[1], JSON.stringify(newJson, null, 4));
+
+      setIsKeySyncModalOpen(false);
+      setLoadingStatus("Structure synchronized!");
+      setTimeout(() => setLoadingStatus(""), 2000);
+    } catch (e) {
+      console.error(e);
+      alert("Error syncing: " + e.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const performTranslation = async (mode) => {
@@ -677,6 +726,12 @@ function AppContent() {
             {viewMode === "editor" && editorData && (
               <>
                 <button
+                  onClick={() => setIsKeySyncModalOpen(true)}
+                  className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded border border-transparent transition-colors mr-2">
+                  <RefreshCw size={14} />
+                  Check Structure
+                </button>
+                <button
                   onClick={handleResetToBase}
                   className="px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 rounded border border-transparent hover:border-red-200 transition-colors mr-2">
                   Reset to Original
@@ -773,6 +828,12 @@ function AppContent() {
           )}
         </div>
       </main>
+      <KeySyncModal
+        isOpen={isKeySyncModalOpen}
+        onClose={() => setIsKeySyncModalOpen(false)}
+        data={editorData || []}
+        onSync={handleSyncKeys}
+      />
     </div>
   );
 }
